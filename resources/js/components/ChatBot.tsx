@@ -36,6 +36,30 @@ export default function ChatBot({ guestMode }: ChatBotProps): React.ReactNode {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const loadChatHistory = async () => {
+    try {
+      const response = await axios.get('/api/chatbot/history');
+      if (response.data.messages && response.data.messages.length > 0) {
+        const formattedMessages = response.data.messages.map((msg: any) => ({
+          id: msg.id?.toString() || Math.random().toString(),
+          content: msg.content,
+          sender: msg.sender,
+          timestamp: msg.created_at || new Date().toISOString()
+        }));
+        console.log('Historique chargé:', formattedMessages); // Ajout de log
+        if (guestMode) {
+          setSessions([formattedMessages]);
+        } else {
+          setMessages(formattedMessages);
+        }
+      } else {
+        console.log('Aucun message trouvé dans l\'historique'); // Ajout de log
+      }
+    } catch (err) {
+      console.error('Erreur lors du chargement de l\'historique:', err);
+    }
+  };
+
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -43,7 +67,9 @@ export default function ChatBot({ guestMode }: ChatBotProps): React.ReactNode {
   }, [guestMode ? sessions[currentSessionIndex] : messages, currentSessionIndex]);
 
   useEffect(() => {
-    if (guestMode && sessions.length === 0) {
+    if (!guestMode) {
+      loadChatHistory();
+    } else if (guestMode && sessions.length === 0) {
       setSessions([[]]);
       setCurrentSessionIndex(0);
     }
@@ -95,10 +121,8 @@ export default function ChatBot({ guestMode }: ChatBotProps): React.ReactNode {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim() || !selectedType) return;
-
     setLoading(true);
     setError(null);
-
     try {
       if (!guestMode) {
         await login();
@@ -136,13 +160,23 @@ export default function ChatBot({ guestMode }: ChatBotProps): React.ReactNode {
       } else {
         errorMessage = 'Une erreur inconnue est survenue.';
       }
-
       setError(errorMessage);
       console.error('Erreur détaillée:', err);
     } finally {
       setInputValue('');
       inputRef.current?.focus();
       setLoading(false);
+    }
+  };
+
+  const deleteSession = (index: number) => {
+    if (guestMode) {
+      setSessions(prev => prev.filter((_, i) => i !== index));
+      if (index === currentSessionIndex) {
+        setCurrentSessionIndex(0);
+      }
+    } else {
+      setError('La suppression de sessions n\'est pas autorisée pour les utilisateurs authentifiés.');
     }
   };
 
@@ -170,6 +204,15 @@ export default function ChatBot({ guestMode }: ChatBotProps): React.ReactNode {
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="text-sm font-medium">Session {idx + 1}</h3>
                       <span className="text-xs text-gray-500">{session.length} messages</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteSession(idx);
+                        }}
+                        className="text-red-500 text-xs"
+                      >
+                        Supprimer
+                      </button>
                     </div>
                     <div className="space-y-2">
                       {session.slice(0, 2).map((msg, i) => (
@@ -185,16 +228,38 @@ export default function ChatBot({ guestMode }: ChatBotProps): React.ReactNode {
             ) : (
               <p className="text-gray-400 text-sm">Pas de sessions pour le moment.</p>
             )
-          ) : null}
+          ) : (
+            messages.length > 0 ? (
+              <div className="space-y-4">
+                <div
+                  key={`session-0`}
+                  className={`bg-gray-50 rounded-lg p-4 mb-4 cursor-pointer bg-blue-200`}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-sm font-medium">Session Active</h3>
+                    <span className="text-xs text-gray-500">{messages.length} messages</span>
+                  </div>
+                  <div className="space-y-2">
+                    {messages.slice(0, 2).map((msg, i) => (
+                      <p key={i} className="text-sm text-gray-300">{msg.content}</p>
+                    ))}
+                    {messages.length > 2 && (
+                      <span className="text-xs text-gray-500">+{messages.length - 2} autres messages</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-gray-400 text-sm">Pas de messages pour le moment.</p>
+            )
+          )}
         </div>
       </div>
-
       {/* Main Chat Window */}
       <div className="flex-1 flex flex-col bg-gray-50">
         <div className="p-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">Chatbot d'Orientation</h2>
         </div>
-
         <div className="flex-1 overflow-y-auto p-6 bg-white">
           {error && (
             <div className="p-4 bg-red-100 text-red-600 rounded-lg mb-6">
@@ -220,7 +285,6 @@ export default function ChatBot({ guestMode }: ChatBotProps): React.ReactNode {
           )}
           <div ref={messagesEndRef} />
         </div>
-
         <div className="border-t border-gray-200 p-6 space-y-4">
           <button
             onClick={handleNewConversation}
@@ -228,7 +292,6 @@ export default function ChatBot({ guestMode }: ChatBotProps): React.ReactNode {
           >
             Nouvelle conversation
           </button>
-
           <form onSubmit={handleSendMessage} className="flex space-x-4">
             <input
               type="text"
@@ -251,7 +314,7 @@ export default function ChatBot({ guestMode }: ChatBotProps): React.ReactNode {
               </option>
               <option value="école">école</option>
               <option value="conseil">Conseil</option>
-              <option value="filliere">filliere</option>
+              <option value="filiere">filiere</option>
             </select>
             <button
               type="submit"
@@ -265,4 +328,4 @@ export default function ChatBot({ guestMode }: ChatBotProps): React.ReactNode {
       </div>
     </div>
   );
-}
+};

@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('chat_messages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('chat_session_id')->constrained()->onDelete('cascade');
+            $table->text('content');
             $table->enum('sender', ['user', 'bot']);
-            $table->longText('content') ;
             $table->timestamps();
         });
+        
     }
 
     /**
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('chat_messages');
+        Schema::dropIfExists('chatbot_messages');
     }
 };

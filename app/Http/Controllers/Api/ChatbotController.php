@@ -68,7 +68,7 @@ class ChatbotController extends Controller
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
                 'Content-Type' => 'application/json',
-            ])->post('https://openrouter.ai/api/v1/chat/completions', [
+            ])->post('https://openrouter.ai/api/v1/chat/completions',  [
                 'model' => env('OPENROUTER_MODEL', 'opengvlab/internvl3-14b:free'),
                 'messages' => $messages,
                 'stream' => false,
@@ -118,10 +118,20 @@ class ChatbotController extends Controller
                 $messages = DB::table('chatbot_messages')->orderBy('created_at')->get();
             }
 
-            return response()->json(['messages' => $messages]);
+            // Formater les messages pour la réponse JSON
+            $formattedMessages = $messages->map(function ($message) {
+                return [
+                    'id' => $message->id,
+                    'content' => $message->content,
+                    'sender' => $message->sender,
+                    'created_at' => $message->created_at->toISOString()
+                ];
+            });
+
+            return response()->json(['messages' => $formattedMessages]);
 
         } catch (\Exception $e) {
             return response()->json(['error' => 'Erreur historique'], 500);
         }
     }
-}
+};

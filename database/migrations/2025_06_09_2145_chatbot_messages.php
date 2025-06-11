@@ -6,17 +6,24 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
         Schema::create('chatbot_messages', function (Blueprint $table) {
             $table->id();
-            $table->longText('content') ;
+            $table->text('content');
             $table->enum('sender', ['user', 'bot']);
             $table->timestamps();
         });
+        
     }
 
-    public function down()
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
         Schema::dropIfExists('chatbot_messages');
     }
