@@ -18,7 +18,26 @@ class ChatbotController extends Controller
         return ChatSession::firstOrCreate(['user_id' => auth()->id()]);
     }
 
+    /**
+     * Handle chatbot message for guests
+     */
     public function sendMessage(Request $request)
+    {
+        return $this->processMessage($request, false);
+    }
+
+    /**
+     * Handle authenticated chatbot message
+     */
+    public function handleAuthenticatedMessage(Request $request)
+    {
+        return $this->processMessage($request, true);
+    }
+
+    /**
+     * Process chatbot message (common logic for both guest and authenticated users)
+     */
+    private function processMessage(Request $request, $isAuthenticated)
     {
         try {
             $content = $request->input('content');
@@ -28,7 +47,7 @@ class ChatbotController extends Controller
 
             error_log('🚀 Message utilisateur reçu: ' . $content);
 
-            $session = $this->getOrCreateSession();
+            $session = $isAuthenticated ? $this->getOrCreateSession() : null;
 
             // Sauvegarde message utilisateur
             if ($session) {
@@ -57,7 +76,7 @@ class ChatbotController extends Controller
                 $systemMessage = "Tu es un coach en orientation académique et professionnelle au Maroc. Fournis des conseils pratiques, personnalisés et motivants pour aider l'utilisateur à avancer dans ses choix.";
             }
 
-            // Préparer les messages pour l’API
+            // Préparer les messages pour l'API
             $messages = [];
             if ($systemMessage) {
                 $messages[] = ['role' => 'system', 'content' => $systemMessage];
@@ -79,6 +98,7 @@ class ChatbotController extends Controller
             if (!isset($data['choices'][0]['message']['content'])) {
                 throw new \Exception('Invalid API response');
             }
+
 
             $botReply = $data['choices'][0]['message']['content'];
 
