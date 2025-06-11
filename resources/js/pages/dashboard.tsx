@@ -15,7 +15,7 @@ type Conseil = {
 
 export default function Dashboard() {
     // Vérifie si le test est complété (flag dans localStorage)
-    const [testDone, setTestDone] = useState(false);
+    // const [testDone, setTestDone] = useState(false);
 
     const conseils: Conseil[] = [
         {
@@ -50,48 +50,48 @@ export default function Dashboard() {
         }
     ];
 
-    useEffect(() => {
-        let interval: NodeJS.Timeout;
-        const checkStatus = () => {
-            fetch('/api/orientation-status', { credentials: 'include' })
-                .then(res => {
-                    if (res.status === 401) {
-                        // Redirection vers la page de connexion si non authentifié
-                        router.visit('/login');
-                        return;
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    console.log('Status:', data);
-                    if (data.error) {
-                        console.error('API Error:', data.error);
-                        return;
-                    }
-                    setTestDone(!!data.ready);
-                    if (data.ready) {
-                        localStorage.setItem('tawjihibot_test_done', '1');
-                        // Redirection automatique si résultat prêt et pas déjà sur la page
-                        const current = window.location.pathname;
-                        if (current !== '/mes-resultats' && current !== '/attente-analyse') {
-                            router.visit('/mes-resultats');
-                        }
-                    } else {
-                        localStorage.removeItem('tawjihibot_test_done');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error checking status:', error);
-                });
-        };
-        checkStatus();
-        interval = setInterval(checkStatus, 5000);
-        return () => clearInterval(interval);
-    }, []);
+    // useEffect(() => {
+    //     let interval: NodeJS.Timeout;
+    //     const checkStatus = () => {
+    //         fetch('/api/orientation-status', { credentials: 'include' })
+    //             .then(res => {
+    //                 if (res.status === 401) {
+    //                     // Redirection vers la page de connexion si non authentifié
+    //                     router.visit('/login');
+    //                     return;
+    //                 }
+    //                 return res.json();
+    //             })
+    //             .then(data => {
+    //                 console.log('Status:', data);
+    //                 if (data.error) {
+    //                     console.error('API Error:', data.error);
+    //                     return;
+    //                 }
+    //                 // setTestDone(!!data.ready);
+    //                 // if (data.ready) {
+    //                 //     localStorage.setItem('tawjihibot_test_done', '1');
+    //                 //     // Redirection automatique si résultat prêt et pas déjà sur la page
+    //                 //     const current = window.location.pathname;
+    //                 //     if (current !== '/mes-resultats' && current !== '/attente-analyse') {
+    //                 //         router.visit('/mes-resultats');
+    //                 //     }
+    //                 // } else {
+    //                 //     localStorage.removeItem('tawjihibot_test_done');
+    //                 // }
+    //             })
+    //             .catch(error => {
+    //                 console.error('Error checking status:', error);
+    //             });
+    //     };
+    //     checkStatus();
+    //     interval = setInterval(checkStatus, 5000);
+    //     return () => clearInterval(interval);
+    // }, []);
 
-    const handleStartTest = () => {
-        router.visit('/test-orientation');
-    };
+    // const handleStartTest = () => {
+    //     router.visit('/test-orientation');
+    // };
 
     return (
         <AppLayout>
